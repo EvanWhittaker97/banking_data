@@ -12,14 +12,32 @@ setwd("C:xxx")
 #import data
 credit<-read.csv("credit_cards.csv")
 credit<- na.omit(credit)
-View(credit)
-
-#set random number seed in order to replicate the centroids chosen
-set.seed(42)
 
 #Drop our discrete variables
 credit1 <- subset(credit, select = -c(CUST_ID))
 View(credit1)
+
+# Calculate 1st and 99th percentiles for each column
+Q1 <- apply(credit1, 2, function(x) quantile(x, probs = 0.01, na.rm = TRUE))
+Q99 <- apply(credit1, 2, function(x) quantile(x, probs = 0.99, na.rm = TRUE))
+
+# Define a function to identify an outlier
+is_outlier <- function(x, lower, upper) {
+  return(x < lower | x > upper)
+}
+
+# Apply the function to the data
+outliers <- apply(credit1, 2, function(x) is_outlier(x, Q1, Q99))
+
+# Identify rows that have at least one outlier
+outlier_rows <- apply(outliers, 1, any)
+
+# Remove rows with outliers
+credit1 <- credit1[!outlier_rows, ]
+
+
+#set random number seed in order to replicate the centroids chosen
+set.seed(42)
 
 #normalize the data
 credit_scaled<-scale(credit1)
